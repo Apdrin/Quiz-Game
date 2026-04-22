@@ -89,30 +89,28 @@ totalQuestionEl.textContent = quizQuestions.length;
 
 function renderQuestions() {
   locked = false;
-
   const q = quizQuestions[currentIndex];
 
-  currentQuestionEl.textContent = currentIndex + 1;
+  maxScoreEl.textContent = quizQuestions.length;
   questionText.textContent = q.question;
+  currentQuestionEl.textContent = currentIndex + 1;
+
+  const progress = (currentIndex / quizQuestions.length) * 100;
+  progressEl.style.width = `${progress}%`;
 
   answerContainer.replaceChildren();
 
   q.answers.forEach(({ text, correct }) => {
-    const btn = document.createElement("button");
+    const button = document.createElement("button");
+    button.classList.add("answer-btn");
 
-    btn.classList.add("answer-btn");
-    btn.textContent = text;
+    button.dataset.correct = String(correct);
+    button.textContent = text;
 
-    btn.dataset.correct = String(correct);
+    button.addEventListener("click", handleAnswerClick);
 
-    btn.addEventListener("click", handleAnswerClick);
-
-    answerContainer.appendChild(btn);
+    answerContainer.appendChild(button);
   });
-
-  const progress = (currentIndex / quizQuestions.length) * 100;
-
-  progressEl.style.width = `${progress}`;
 }
 
 // handle answer
@@ -121,27 +119,31 @@ function handleAnswerClick(e) {
   locked = true;
 
   const selectedBtn = e.currentTarget;
-  const isCorrect = selectedBtn.dataset.correct === "true";
+  const isSelectedCorrect = selectedBtn.dataset.correct === "true";
 
-  [...answerContainer.children].forEach((button) => {
-    const correct = button.dataset.correct === "true";
+  // Highlight buttons based on correctness
+  [...answerContainer.children].forEach((btn) => {
+    const correct = btn.dataset.correct === "true";
 
-    button.classList.add(correct ? "correct" : "incorrect");
-    // btn.disabled = true;
+    btn.classList.add(correct ? "correct" : "incorrect");
   });
 
-  if (isCorrect) {
+  if (isSelectedCorrect) {
     score++;
     scoreEl.textContent = score;
   }
 
-  setTimeout(nextQuestion, 1000);
+  setTimeout(nextQuestion, 900);
 }
 
 function nextQuestion() {
   currentIndex++;
 
-  currentIndex < quizQuestions.length ? renderQuestions() : showResult();
+  if (currentIndex < quizQuestions.length) {
+    renderQuestions();
+  } else {
+    showResult();
+  }
 }
 
 function showResult() {
@@ -149,29 +151,25 @@ function showResult() {
   resultScreen.classList.add("active");
 
   finalScoreEl.textContent = score;
-  const percent = (score / quizQuestions.length) * 100;
 
+  const percent = (score / quizQuestions.length) * 100;
   resultMsg.textContent =
     percent === 100
-      ? "Perfect, you're a genius!"
-      : percent >= 80
-        ? "Great job"
-        : percent >= 60
-          ? "Good effort"
-          : percent >= 40
-            ? "Not Bad, keep improving"
-            : "Keep Studying, You'll Get better";
+      ? "Perfect"
+      : percent > 80
+        ? "Almost"
+        : percent > 60
+          ? "keep up the good work"
+          : percent > 40
+            ? "Not bad"
+            : "keep on learning";
 }
 
 // flow control
 //Start Quiz
 function startQuiz() {
-  // reset
   currentIndex = 0;
   score = 0;
-  locked = false;
-
-  scoreEl.textContent = score;
 
   startScreen.classList.remove("active");
   quizScreen.classList.add("active");
